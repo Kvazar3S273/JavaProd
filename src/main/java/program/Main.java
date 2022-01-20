@@ -10,15 +10,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
+import static program.Helper.readInputDouble;
+import static program.Helper.readInputInt;
+
 public class Main {
     static Scanner in = new Scanner(System.in);
 
     public static void main(String[] args) {
         String strConn = "jdbc:mariadb://localhost:3306/javadb";
-        //InsertIntoDB(strConn);
+        InsertIntoDB(strConn);
         List<Product> list = SelectFromDB(strConn);
         PrintProductList(list);
-        UpdateForDB(strConn);
+        //UpdateForDB(strConn);
         //DeleteFromDB(strConn);
         list = SelectFromDB(strConn);
         PrintProductList(list);
@@ -41,11 +44,12 @@ public class Main {
                 System.out.println("Enter name: ");
                 name = in.nextLine();
                 System.out.println("Enter price: ");
-                price = Double.parseDouble(in.nextLine());
+                price = readInputDouble();
+                //price = Double.parseDouble(in.nextLine());
                 System.out.println("Enter description: ");
                 description = in.nextLine();
                 stmt.setString(1, name);
-                stmt.setBigDecimal(2, new BigDecimal(price));
+                stmt.setDouble(2, price);
                 stmt.setString(3, description);
                 int rows = stmt.executeUpdate();
                 System.out.println("Update rows: " + rows);
@@ -59,7 +63,7 @@ public class Main {
     }
 
     private static List<Product> SelectFromDB(String strConn) {
-        try(Connection con = DriverManager.getConnection(strConn, "root", "")) {
+        try (Connection con = DriverManager.getConnection(strConn, "root", "")) {
             String selectSql = "SELECT * FROM products";
             try {
                 PreparedStatement ps = con.prepareStatement(selectSql);
@@ -83,22 +87,21 @@ public class Main {
     }
 
     private static void UpdateForDB(String strConn) {
-        try(Connection con = DriverManager.getConnection(strConn, "root", "")) {
+        try (Connection con = DriverManager.getConnection(strConn, "root", "")) {
             String query = "UPDATE products SET name = ? WHERE id = ?";
-            try(PreparedStatement stmt = con.prepareStatement(query)) {
+            try (PreparedStatement stmt = con.prepareStatement(query)) {
                 System.out.print("\nEnter id: ");
-                int id = in.nextInt();
+                int id = readInputInt();
                 System.out.print("Enter new name: ");
-                in.nextLine();
+                //in.nextLine();
                 String name = in.nextLine();
                 stmt.setString(1, name);
                 stmt.setInt(2, id);
 
                 int rows = stmt.executeUpdate();
 
-                System.out.println("Successful update "+ rows);
-            }
-            catch (Exception ex) {
+                System.out.println("Successful update " + rows);
+            } catch (Exception ex) {
                 System.out.println("Error update:" + ex.getMessage());
             }
         } catch (Exception ex) {
@@ -108,11 +111,11 @@ public class Main {
 
     private static void DeleteFromDB(String strConn) {
         SelectFromDB(strConn);
-        try(Connection con = DriverManager.getConnection(strConn, "root", "")) {
+        try (Connection con = DriverManager.getConnection(strConn, "root", "")) {
             String query = "DELETE FROM products WHERE id = ?";
-            try(PreparedStatement stmt = con.prepareStatement(query)) {
+            try (PreparedStatement stmt = con.prepareStatement(query)) {
                 System.out.print("Enter Id: ");
-                int id = in.nextInt();
+                int id = readInputInt();
                 stmt.setInt(1, id);
                 int rows = stmt.executeUpdate();
                 System.out.println("Successful delete " + rows);
