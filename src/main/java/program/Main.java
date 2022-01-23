@@ -18,7 +18,9 @@ public class Main {
     public static void main(String[] args) {
         String strConn = "jdbc:mariadb://localhost:3306/javadb";
         //InsertIntoDB(strConn);
-        //GenerateProducts(strConn);
+
+        FakeSeeder(strConn);
+
         List<Product> list = SelectFromDB(strConn);
         PrintProductList(list);
         //UpdateForDB(strConn);
@@ -51,33 +53,47 @@ public class Main {
         return exist;
     }
 
-    private static final String insertFakerSQL = " INSERT INTO products " +
-            " (id,name,price,description) VALUES " + "(?,?,?,?);";
-
-    private static void GenerateProducts(String strConn) {
+    private static void GenerateProducts(String strConn, Product product) {
         Faker faker = Faker.instance(new Locale("uk"));
-        try (Connection con = DriverManager.getConnection(strConn, "root", "");
+        try (Connection con = DriverManager.getConnection(strConn, "root", ""))
+        {
+             String query = "INSERT INTO `products` (`Name`, `Price`, `Description`) VALUES (?, ?, ?)";
+             try (PreparedStatement preparedStatement = con.prepareStatement(query))
+             {
+                 preparedStatement.setString(1, product.getName());
+                 preparedStatement.setBigDecimal(2, product.getPrice());
+                 preparedStatement.setString(3, product.getDescription());
 
-             PreparedStatement preparedStatement = con.prepareStatement(insertFakerSQL);) {
+                 int rows = preparedStatement.executeUpdate();
+             }
+             catch (Exception ex)
+             {
+                 System.out.println(ex.getMessage());
+             }
 
-            if (!isTableExist(strConn)) {
-                List<Product> generatedProdList = new ArrayList<>();
-                for (int i = 0; i < 10; i++) {
-                    preparedStatement.setInt(1, faker.random().nextInt(0, 10));
-                    preparedStatement.setString(2, faker.commerce().productName());
-                    preparedStatement.setDouble(3, faker.random().nextDouble());
-                    preparedStatement.setString(4, faker.commerce().color());
-                    preparedStatement.addBatch();
-                }
-                System.out.println("База згенерована");
-            } else {
-                System.out.println("Ви не можете згенерувати базу, так як вона вже згенерована!");
-            }
         } catch (SQLException ex) {
             System.out.println("Error connection: " + ex.getMessage());
         }
+    }
 
+    public static void FakeSeeder(String strConn){
+        if(!isTableExist(strConn))
+        {
+            Faker faker = new Faker(new Locale("uk"));
 
+            String productName, description;
+            int price;
+
+            for(int i = 0; i< 1000; i++)
+            {
+                Product product = new Product(i,
+                        faker.commerce().productName(),
+                        new BigDecimal(faker.random().nextInt(5, 1000)),
+                        faker.commerce().material());
+
+                GenerateProducts(strConn, product);
+            }
+        }
     }
 
     private static void InsertIntoDB(String strConn) {
